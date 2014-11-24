@@ -1,0 +1,5 @@
+﻿ASM
+http://es.kioskea.net/faq/3284-compilar-un-programa-ensamblador-con-nasm
+
+TXT
+http://computernewage.com/2013/05/14/como-leer-archivos-de-texto-desde-la-terminal-de-linux/
