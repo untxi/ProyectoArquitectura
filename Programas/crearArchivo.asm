@@ -24,28 +24,65 @@ bienvenida00  	db " ::::\           :|   ++              ::::\   ::::::\  ::\ ::
 bienvenida01  	db "::|,::|:::| .::/ :::| :| :\:| ,::\   ::|,::|  ::| ::|  ::::::|",0 
 bienvenida02  	db "::| ::|:|   `::\ :|:| :|  :/  `::/   ::| ::|  ::::::/  ::| \:|",0
 intro         	db "Vamos a crear un archivo con secuencias de ADN",0
-digitaNombreArchivo db "Digite el nombre del archivo (sólo 8 caracteres): ",0
+digitaNombreArchivo db "Digite el nombre del archivo (sólo 8 caracteres) finalizando con <<.adn>>: ",0
 digitaCantidadBases db "Digite la cantidad de Bases de ADN que desea generar (de 0 a 9999): ", 0
 confirmar 	  	db "Desea escribir <<", 0
 confirmarCantidad 	db ">> bases de ADN? (S/N)  ", 0
 confirmarNombre 	db ">> como nombre para el archivo? (S/N)  ",0
+;extensionArchivo	db ".adn",0
 ubicaArchivo  	db "El archivo se guardará en la carpeta de...",0
 resultadoBien 	db "El archivo se ha creado y guardado", 0
 resultadoMal  	db "Ha ocurrido un error en el proceso, vuelva a crear el archivo",0
+;paraArchivo		db 300 dup(?)
+baseA			db "A", 0
+msjBases		db "Asignando Bases...",0
 ;Contantes para generar el numero random
 randConst   dd 0x00000003     ;ANSI C: Addition constant:   =          3
-randMult    dd 0x41C64E6D     ;ANSI C: Multiplicator:       = 1103515245
+randMult    dd 0x00004E6D     ;ANSI C: Multiplicator
 randShift   dd 0x00000000     ;ANSI C: No shift necessary
 randMask    dd 0x7FFFFFFF     ;ANSI C: Take bits 0..30
 randValue   dd 0x3C6EF35F     ;Initial value & result container
 
 .UDATA
-nombreArchivo 	RESB 8
-respuesta 		RESB 1
+nombreArchivo 	RESB    12 ;nombre00.adn
+;nombreGuardar   RESB 12
+respuesta 		RESB     1 ; s/n
+tiraArchivo		RESB 40000 ; Cantidad de Bases Máximas(9999) * cantidad de simbolos Base(4) = 39 996
+
+randAnswer		RESB 16
 
 .CODE
 	.STARTUP
+	
+;los va pasando de uno en uno en un loop con  mov e indexado con variable[di]
+plusA:
+	;mov 	ax, 'A'
+	push eax
+	mov 	eax, baseA[0]
+	mov 	tiraArchivo, eax
+	;aaa		;Ajust ASCII
+	pop eax
+	ret
 
+plusC:
+	mov BX, 'C'
+	mov [tiraArchivo], BX
+	aaa		;Ajust ASCII
+	ret
+
+plusT:
+	mov BX, 'T'
+	mov [tiraArchivo], BX
+	aaa		;Ajust ASCII
+	ret
+
+plusG:
+	mov BX, 'G'
+	mov [tiraArchivo], BX
+	aaa		;Ajust ASCII
+	ret
+	
+inicio:
 	PutStr 	bienvenida00 ; Presentación de Programa
 	nwln
 	PutStr 	bienvenida01
@@ -66,7 +103,7 @@ cuantasBases:
 	cmp		byte [respuesta], 's' 
 	jne 	cuantasBases
 	
-cualNombre:	
+cualNombre:
 	nwln
 	PutStr 	digitaNombreArchivo
 	GetStr 	nombreArchivo, 8
@@ -77,12 +114,52 @@ cualNombre:
 	cmp 	byte [respuesta], 's'
 	jne		cualNombre
 
+	PutStr  msjBases
+	nwln
+	
 asignaBase:
-	call random
-	push AX
-	XOR  AX,AX
-	mov AX, random
-	PutInt AX
+	call 	random
+	call 	modulo
+	cmp     EAX, 0
+	cmp     EAX, 5
+	cmp		EAX, 9
+	je      plusA
+	cmp     EAX, 1
+	cmp     EAX, 6
+	je      plusC
+	cmp     EAX, 2
+	cmp     EAX, 7
+	je      plusT
+	cmp     EAX, 3
+	cmp     EAX, 8
+	je      plusG
+	loop asignaBase
+	
+;La int 21h, sirve para "mostrar cosas por pantalla". 
+;Para que funcione, es necesario que en AH este el 
+;numero de la funcion a llamar.
+
+guardaArchivo:
+	nwln
+	PutStr tiraArchivo
+	nwln
+	PutStr nombreArchivo
+	nwln
+;	PutStr  guardaArchivo
+;	mov ah,3ch
+;	mov cx,0
+;	mov dx, nombreArchivo;offset
+;	int 21h
+;	jc finMal ;si no se pudo crear
+;	mov bx,ax
+;	mov ah,3eh ;cierra el archivo
+	jmp finBien
+	
+	
+finMal:
+	nwln
+	PutStr resultadoMal
+	jmp inicio
 	
 finBien:
 	nwln
@@ -105,9 +182,20 @@ random:
 	add   eax,  [randConst]             ; MOD MASK
 	and   eax,  [randMask]              ; in CPU register and
 	mov   dword [randValue],   eax      ; save back R(n+1)
-	pop   edx                           ;Restore edx regsiter
-	fild  dword [randValue]             ;Normalize
-	fidiv dword [randMask]              ; to ONE in FPU
+	;mov	  randAnswer, randValue
+	;pop   edx                           ;Restore edx regsiter
+	;fild  dword [randValue]             ;Normalize
+	;fidiv dword [randMask]              ; to ONE in FPU
 	ret                                 ;Return
-;.end
 ;::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+;::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+; Módulo 10 de un número
+;nos quedaría el módulo (resto) en edx y el cociente en eax.	
+modulo:
+	;mov eax, 23
+	cdq
+	mov ecx, 5
+	idiv ecx
+	ret
+	;EDX = residuo
