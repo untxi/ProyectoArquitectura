@@ -53,7 +53,7 @@ randAnswer		RESB 16
 
 .CODE
 	.STARTUP
-	
+; Concatenar a la tira una letra a la vez, la cual es parte de la base "A", "C", "T" ó "G"	
 ;los va pasando de uno en uno en un loop con  mov e indexado con variable[di]
 plusA:
 	;mov 	ax, 'A'
@@ -81,7 +81,8 @@ plusG:
 	mov [tiraArchivo], BX
 	aaa		;Ajust ASCII
 	ret
-	
+
+; ::::::::::::: Inicio del Programa :::::::::::::
 inicio:
 	PutStr 	bienvenida00 ; Presentación de Programa
 	nwln
@@ -91,7 +92,7 @@ inicio:
 	nwln
 	nwln
 	PutStr 	intro
-
+; ::::::::::: Solicitudes al usuario :::::::::::
 cuantasBases:
 	nwln
 	PutStr 	digitaCantidadBases ; Cantidad de bases
@@ -116,11 +117,13 @@ cualNombre:
 
 	PutStr  msjBases
 	nwln
-	
+
+; ::::::::::::: Crea la Tira para el archivo :::::::::::::
 asignaBase:
-	call 	random
-	call 	modulo
-	cmp     EAX, 0
+	call 	random ; llama un número aleatorio
+	call 	modulo ; le saca módulo
+	; lo compara para asignar una letra a la tira
+	cmp     EAX, 0 
 	cmp     EAX, 5
 	cmp		EAX, 9
 	je      plusA
@@ -133,34 +136,36 @@ asignaBase:
 	cmp     EAX, 3
 	cmp     EAX, 8
 	je      plusG
+	; repite la cantidad de bases ingresadas por el usuario
 	loop asignaBase
 	
 ;La int 21h, sirve para "mostrar cosas por pantalla". 
 ;Para que funcione, es necesario que en AH este el 
 ;numero de la funcion a llamar.
 
+; ::::::::::::: Crea el Archivo :::::::::::::
 guardaArchivo:
 	nwln
 	PutStr tiraArchivo
 	nwln
 	PutStr nombreArchivo
 	nwln
-;	PutStr  guardaArchivo
-;	mov ah,3ch
-;	mov cx,0
-;	mov dx, nombreArchivo;offset
-;	int 21h
-;	jc finMal ;si no se pudo crear
-;	mov bx,ax
-;	mov ah,3eh ;cierra el archivo
+	PutStr  guardaArchivo
+	mov ah,3ch
+	mov cx,0
+	mov dx, nombreArchivo;offset
+	int 21h
+	jc finMal ;si no se pudo crear
+	mov bx,ax
+	mov ah,3eh ;cierra el archivo
 	jmp finBien
 	
-	
+; ::::::Si se presenta algun error lo reporta y solicita al usuario repetir el procedimiento
 finMal:
 	nwln
 	PutStr resultadoMal
 	jmp inicio
-	
+; ::::::Si no se presentan errores, finaliza el programa
 finBien:
 	nwln
 	PutStr resultadoBien; Resultado del Programa: Exitóso
